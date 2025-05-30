@@ -47,12 +47,6 @@ public class Main {
                 }
                 case "2" -> {
                     clearConsole();
-                    System.out.println("Stages' information:");
-                    reader.readLine("Press Enter to continue...");
-                    // Call method to display stages' information
-                }
-                case "3" -> {
-                    clearConsole();
                     System.exit(0);
                 }
                 default -> {
@@ -77,8 +71,7 @@ public class Main {
     public static void printMenu() {
         clearConsole();
         System.out.println("1. Registred Bands");
-        System.out.println("2. Stages' information");
-        System.out.println("3. Exit\n");
+        System.out.println("2. Exit\n");
     }
 
     public static Connection getConnection() {

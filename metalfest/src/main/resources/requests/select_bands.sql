@@ -7,5 +7,5 @@ SELECT
     Performance.TimeStart AS PerformanceStart,
     Performance.TimeEnd AS PerformanceEnd
 FROM Band
-INNER JOIN Performance ON Band.ID = Performance.Band_id
-INNER JOIN Stage ON Performance.Stage_id = Stage.ID;
+LEFT JOIN Performance ON Band.ID = Performance.Band_id
+LEFT JOIN Stage ON Performance.Stage_id = Stage.ID;

@@ -5,10 +5,13 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.Date;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Time;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.databases.Main;
 
@@ -18,19 +21,50 @@ public class Bands {
     private ResultSet tableSearchResult;
     private ResultSet bandSearchResult;
     private ResultSet membersSearchResult;
-    private final String viewBands;
+    private String viewBands;
 
     public Bands() {
         this.connection = Main.getConnection();
         try {
             this.statement = connection.createStatement();
-        } catch (java.sql.SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException("Error creating SQL statement: " + e.getMessage(), e);
         }
         if (this.connection == null) {
             throw new RuntimeException("Connection to the database is not established.");
         }
 
+        bandsContentUpdate();
+    }
+
+    public void start() {
+        while (true) {
+            displayTable();
+            displayTableActions();
+            
+            String input;
+            input = Main.getReader().readLine("\nChoose an option: ");
+            
+            switch (input) {
+                case "1" -> {
+                    displayTable();
+                    chooseBand();
+                }
+                case "2" -> {
+                    addBandWithMembers();
+                    Main.getReader().readLine("Press Enter to continue...");
+                    bandsContentUpdate();
+                }
+                case "3" -> {
+                    Main.clearConsole();
+                    return;
+                }
+            }
+        }
+    }
+
+    private void bandsContentUpdate() {
+        
         String bandsContent = "";
         try (InputStream is = getClass().getClassLoader().getResourceAsStream("requests/select_bands.sql")) {
             if (is == null) {
@@ -40,32 +74,77 @@ public class Bands {
         } catch (IOException e) {
             System.err.println("Error initializing SQL requests: " + e.getMessage());
         }
-        this.viewBands = bandsContent;
+        viewBands = bandsContent;
     }
 
-    public void start() {
-        String input;
+    private void addBandWithMembers() {
+        Main.clearConsole();
+        System.out.println("Add new band");
+        System.out.print("Enter band name: ");
+        String bandName = Main.getReader().readLine();
+        System.out.print("Enter country: ");
+        String country = Main.getReader().readLine();
+        System.out.print("Enter biography: ");
+        String biography = Main.getReader().readLine();
 
+        List<Member> members = new ArrayList<>();
         while (true) {
-            displayTable();
-            displayTableActions();
-            
-            input = Main.getReader().readLine("\nChoose an option: ");
-            switch (input) {
-                case "1" -> {
-                    displayTable();
-                    chooseBand();
-                }
-                case "2" -> {
-                    Main.clearConsole();
-                    return;
-                }
-            }
+            Main.clearConsole();
+            System.out.print("Enter member first name (or leave empty to stop): ");
+            String firstName = Main.getReader().readLine();
+            if (firstName.isEmpty()) break;
+            System.out.print("Enter last name: ");
+            String lastName = Main.getReader().readLine();
+            System.out.print("Enter age: ");
+            int age = Integer.parseInt(Main.getReader().readLine());
+            members.add(new Member(firstName, lastName, age));
         }
 
+        String insertBandSQL = "INSERT INTO Band (Name, Country, Biography) VALUES (?, ?, ?) RETURNING ID";
+        String insertMemberSQL = "INSERT INTO Member (Band_id, FirstName, LastName, Age) VALUES (?, ?, ?, ?)";
 
+        try {
+            connection.setAutoCommit(false);
+            int bandId = -1;
+            try (PreparedStatement psBand = connection.prepareStatement(insertBandSQL)) {
+                psBand.setString(1, bandName);
+                psBand.setString(2, country);
+                psBand.setString(3, biography);
+                ResultSet rs = psBand.executeQuery();
+                if (rs.next()) {
+                    bandId = rs.getInt(1);
+                } else {
+                    throw new SQLException("Failed to retrieve new band ID.");
+                }
+            }
+
+            try (PreparedStatement psMember = connection.prepareStatement(insertMemberSQL)) {
+                for (Member m : members) {
+                    psMember.setInt(1, bandId);
+                    psMember.setString(2, m.getFirstName());
+                    psMember.setString(3, m.getLastName());
+                    psMember.setInt(4, m.getAge());
+                    psMember.executeUpdate();
+                }
+            }
+
+            connection.commit();
+            System.out.println("Band and members added successfully.");
+        } catch (SQLException e) {
+            try {
+                connection.rollback();
+                System.err.println("Transaction rolled back due to: " + e.getMessage());
+            } catch (SQLException rollbackEx) {
+                System.err.println("Rollback failed: " + rollbackEx.getMessage());
+            }
+        } finally {
+            try {
+                connection.setAutoCommit(true);
+            } catch (SQLException e) {
+                System.err.println("Failed to reset auto-commit: " + e.getMessage());
+            }
+        }
     }
-
     private void displayTable() {
         Main.clearConsole();
         System.out.println("Registered Bands:");
@@ -81,7 +160,8 @@ public class Bands {
 
     private void displayTableActions() {
         System.out.println("\n1. View band details");
-        System.out.println("2. Return to main menu");
+        System.out.println("2. Add new band with members");
+        System.out.println("3. Return to main menu");
     }
 
     private void chooseBand() {
@@ -271,4 +351,21 @@ public class Bands {
                     bandId, bandName, bandCountry, stageName, performanceDate, start, end);
         }
     }
+
+    private static class Member {
+        private final String firstName;
+        private final String lastName;
+        private final int age;
+
+        public Member(String firstName, String lastName, int age) {
+            this.firstName = firstName;
+            this.lastName = lastName;
+            this.age = age;
+        }
+
+        public String getFirstName() { return firstName; }
+        public String getLastName() { return lastName; }
+        public int getAge() { return age; }
+    }
+    
 }
