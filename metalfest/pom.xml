@@ -25,6 +25,12 @@
             <artifactId>jsch</artifactId>
             <version>0.1.55</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.jline</groupId>
+            <artifactId>jline</artifactId>
+            <version>3.21.0</version>
+        </dependency>
     </dependencies>
 
 </project>

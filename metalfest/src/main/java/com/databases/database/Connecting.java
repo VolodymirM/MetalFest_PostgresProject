@@ -1,4 +1,4 @@
-package com.databases.connection;
+package com.databases.database;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -40,7 +40,7 @@ public class Connecting {
 
             String jdbcUrl = "jdbc:postgresql://localhost:" + localPort + "/" + dbName;
             conn = DriverManager.getConnection(jdbcUrl, dbUser, dbPassword);
-            
+        
         } catch (JSchException | SQLException e) {
             throw new RuntimeException("Failed to establish SSH tunnel or connect to the database", e);
         }
@@ -53,5 +53,9 @@ public class Connecting {
             session.disconnect();
             System.out.println("SSH Tunnel closed.");
         }
+    }
+
+    public Connection getConnection() {
+        return conn;
     }
 }
