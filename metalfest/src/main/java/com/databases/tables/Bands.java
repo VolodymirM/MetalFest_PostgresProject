@@ -64,8 +64,8 @@ public class Bands {
     }
 
     private void bandsContentUpdate() {
-        
         String bandsContent = "";
+        
         try (InputStream is = getClass().getClassLoader().getResourceAsStream("requests/select_bands.sql")) {
             if (is == null) {
                 throw new RuntimeException("SQL file not found!");
@@ -74,6 +74,7 @@ public class Bands {
         } catch (IOException e) {
             System.err.println("Error initializing SQL requests: " + e.getMessage());
         }
+        
         viewBands = bandsContent;
     }
 
@@ -145,6 +146,7 @@ public class Bands {
             }
         }
     }
+    
     private void displayTable() {
         Main.clearConsole();
         System.out.println("Registered Bands:");

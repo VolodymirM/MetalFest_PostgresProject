@@ -41,7 +41,6 @@ public class Main {
             input = reader.readLine("Choose an option: ");
             switch (input) {
                 case "1" -> {
-                    // Call method to display registered bands
                     Bands bands = new Bands();
                     bands.start();
                 }
