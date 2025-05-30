@@ -9,10 +9,15 @@ import org.jline.reader.LineReaderBuilder;
 import org.jline.reader.UserInterruptException;
 
 import com.databases.database.Connecting;
+import com.databases.tables.Bands;
 
 public class Main {
+    private static Connection connection = null;
+    private static org.jline.reader.LineReader reader;
     public static void main(String[] args) throws SQLException {
-        Connection connection = null;
+        
+        reader = LineReaderBuilder.builder().build();
+
         try {
             connection = new Connecting().getConnection();
         } catch (EndOfFileException | UserInterruptException e) {
@@ -21,8 +26,9 @@ public class Main {
 
         if (connection == null)
             System.exit(1);
-        
-        var reader = LineReaderBuilder.builder().build();
+
+        connection.setAutoCommit(false);
+
         String input;
         
         clearConsole();
@@ -35,10 +41,9 @@ public class Main {
             input = reader.readLine("Choose an option: ");
             switch (input) {
                 case "1" -> {
-                    clearConsole();
-                    System.out.println("Registred Bands:");
-                    reader.readLine("Press Enter to continue...");
                     // Call method to display registered bands
+                    Bands bands = new Bands();
+                    bands.start();
                 }
                 case "2" -> {
                     clearConsole();
@@ -74,5 +79,13 @@ public class Main {
         System.out.println("1. Registred Bands");
         System.out.println("2. Stages' information");
         System.out.println("3. Exit\n");
+    }
+
+    public static Connection getConnection() {
+        return connection;
+    }
+
+    public static org.jline.reader.LineReader getReader() {
+        return reader;
     }
 }
